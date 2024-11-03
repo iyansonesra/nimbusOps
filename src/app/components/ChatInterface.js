@@ -1,17 +1,14 @@
 import { ArrowRight } from 'lucide-react';
-import React, { useEffect, useRef,useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-const MOCK_API_RESPONSE = {
-  message: "I've analyzed your deployment configuration. I can help you set up a Kubernetes cluster with the following specifications:\n\n1. Region: us-west-2\n2. Node count: 3\n3. Instance type: t3.medium\n\nWould you like me to proceed with this configuration?"
-};
 
 const TypeWriter = ({ text, onComplete }) => {
   const [displayedText, setDisplayedText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
+    if (!text) return;
     if (currentIndex < text.length) {
       const timer = setTimeout(() => {
         setDisplayedText(prev => prev + text[currentIndex]);
@@ -27,6 +24,8 @@ const TypeWriter = ({ text, onComplete }) => {
   return <span>{displayedText}</span>;
 };
 
+
+
 const ChatMessage = ({ message, isUser }) => {
   const [isLoading, setIsLoading] = useState(!isUser);
   const [isTyping, setIsTyping] = useState(false);
@@ -34,7 +33,6 @@ const ChatMessage = ({ message, isUser }) => {
 
   useEffect(() => {
     if (!isUser) {
-      // Show loading state for 2 seconds
       const loadingTimer = setTimeout(() => {
         setIsLoading(false);
         setIsTyping(true);
@@ -46,41 +44,43 @@ const ChatMessage = ({ message, isUser }) => {
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 font-montserrat`}>
-    {isLoading ? (
-            <span className = "text-white">
-             
-              <span className="animate-pulse">Loading...</span>
-            </span>
-          ) : (
-      <div
-        className={`max-w-[80%] p-4 rounded-2xl ${
-          isUser
-            ? 'bg-blue-600 text-white rounded-br-none'
-            : 'bg-gray-800 text-blue-100 rounded-bl-none'
-        }`}
-      >
-        <p className="font-inter whitespace-pre-wrap">
-          {showFullMessage ? (
-            message
-          ) : (
-            <TypeWriter 
-              text={message} 
-              onComplete={() => {
-                setIsTyping(false);
-                setShowFullMessage(true);
-              }}
-            />
-          )}
-          {isTyping && <span className="animate-pulse">▋</span>}
-        </p>
-      </div>
-          )}
+      {isLoading ? (
+        <span className="text-white">
+          <span className="animate-pulse">Loading...</span>
+        </span>
+      ) : (
+        <div
+          className={`max-w-[80%] p-4 rounded-2xl ${isUser
+              ? 'bg-blue-600 text-white rounded-br-none'
+              : 'bg-gray-800 text-blue-100 rounded-bl-none'
+            }`}
+        >
+          <p className={`font-inter whitespace-pre-wrap ${message.startsWith('provider') || message.startsWith('#') ? 'font-mono' : ''}`}>
+            {showFullMessage ? (
+              message
+            ) : (
+              <TypeWriter
+                text={message}
+                onComplete={() => {
+                  setIsTyping(false);
+                  setShowFullMessage(true);
+                }}
+              />
+            )}
+            {isTyping && <span className="animate-pulse">▋</span>}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
 
-const ChatInterface = ({ showInput, inputValue, setInputValue }) => {
+const ChatInterface = ({userId, showInput, inputValue, setInputValue, onComplete }) => {
   const [messages, setMessages] = useState([]);
+  const [isComplete, setIsComplete] = useState(false);
+  // const [userId] = useState(() => 'user-' + Math.random().toString(36).substr(2, 9));
+  const initializationRef = useRef(false);
+
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -88,8 +88,142 @@ const ChatInterface = ({ showInput, inputValue, setInputValue }) => {
   };
 
   useEffect(() => {
-    // Initial message with loading and typing animation
-    setMessages([{ text: MOCK_API_RESPONSE.message, isUser: false }]);
+    if (isComplete && onComplete) {
+      setTimeout(() => {
+        onComplete(userId);  // Pass the userId here
+      }, 1000);
+    }
+  }, [isComplete, onComplete, userId]);
+
+  const generateTerraformCode = async () => {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/generate_terraform_code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      setMessages(prev => [
+        ...prev,
+        {
+          text: "Here's the generated Terraform code for your deployment:",
+          isUser: false
+        },
+        {
+          text: data.terraform_code,
+          isUser: false
+        }
+      ]);
+    } catch (error) {
+      console.error('Error generating Terraform code:', error);
+      setMessages(prev => [...prev, {
+        text: "Sorry, there was an error generating the Terraform code. Please try again.",
+        isUser: false
+      }]);
+    }
+  };
+
+  const initializeConversation = async () => {
+    if (initializationRef.current) return;
+    initializationRef.current = true;
+    try {
+      const response = await fetch('http://127.0.0.1:5000/initialize_use_case', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          use_case: "Please ask a question to the user to add any more specifications to help you creating a Terraform deployment code down the line."
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.response === "RESPONSE COMPLETE") {
+        setIsComplete(true);
+        setMessages(prev => [...prev, {
+          text: "Great! All the necessary information has been collected. We can now proceed with the deployment.",
+          isUser: false
+        }]);
+        // Generate Terraform code after completion
+        await generateTerraformCode();
+        return;
+      }
+
+      setMessages(prev => [...prev, { text: data.question, isUser: false }]);
+    } catch (error) {
+      console.error('Error initializing conversation:', error);
+      setMessages(prev => [...prev, {
+        text: "Sorry, there was an error connecting to the server. Please try again.",
+        isUser: false
+      }]);
+    }
+  };
+
+  const sendAnswer = async (answer) => {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/initialize_use_case', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          answer: answer
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.response === "RESPONSE COMPLETE") {
+        
+        setMessages(prev => [...prev, {
+          text: "Great! All the necessary information has been collected. We can now proceed with the deployment.",
+          isUser: false
+        }]);
+        setTimeout(() => {
+          setIsComplete(true);
+  
+        }, 3000);
+        
+        // Generate Terraform code after completion
+        return;
+      }
+
+      setMessages(prev => [...prev, { text: data.question, isUser: false }]);
+    } catch (error) {
+      console.error('Error sending answer:', error);
+      setMessages(prev => [...prev, {
+        text: "Sorry, there was an error connecting to the server. Please try again.",
+        isUser: false
+      }]);
+    }
+  };
+
+  useEffect(() => {
+    initializeConversation();
+    return () => {
+      initializationRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -97,17 +231,12 @@ const ChatInterface = ({ showInput, inputValue, setInputValue }) => {
   }, [messages]);
 
   const handleSubmit = () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isComplete) return;
 
-    // Add user message
-    setMessages(prev => [...prev, { text: inputValue, isUser: true }]);
+    const userMessage = inputValue.trim();
+    setMessages(prev => [...prev, { text: userMessage, isUser: true }]);
     setInputValue('');
-
-    // Add AI response with loading and typing animation
-    setMessages(prev => [...prev, {
-      text: "I understand. I'll proceed with the deployment based on your input. Is there anything specific you'd like me to modify?",
-      isUser: false
-    }]);
+    sendAnswer(userMessage);
   };
 
   const handleKeyPress = (e) => {
@@ -146,17 +275,21 @@ const ChatInterface = ({ showInput, inputValue, setInputValue }) => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
+              placeholder={isComplete ? "Configuration complete" : "Type your message..."}
               className="font-montserrat w-full px-6 py-4 bg-slate-900 text-blue-200 rounded-full 
                         border-2 border-blue-500 focus:outline-none focus:border-blue-900
                         placeholder-blue-200 pr-16 resize-none overflow-hidden"
               rows="1"
               style={{ minHeight: '56px' }}
+              disabled={isComplete}
             />
             <button
               onClick={handleSubmit}
-              className="absolute right-4 p-2 text-white bg-blue-600 rounded-full 
-                       hover:bg-blue-700 transition-colors duration-200"
+              disabled={isComplete}
+              className={`absolute right-4 p-2 text-white rounded-full transition-colors duration-200
+                        ${isComplete
+                  ? 'bg-gray-600 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'}`}
             >
               <ArrowRight size={24} />
             </button>

@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 const DeploymentQuestions = ({ onComplete }) => {
   const [currentQuestion, setCurrentQuestion] = useState('deployment');
   const [isAnimating, setIsAnimating] = useState(false);
+  const [error, setError] = useState(null);
   const [answers, setAnswers] = useState({
     deploymentPlatform: '',
     credentials: {
@@ -19,7 +20,7 @@ const DeploymentQuestions = ({ onComplete }) => {
 
   const deploymentOptions = [
     { id: 'aws', label: 'AWS' },
-    { id: 'google-cloud', label: 'Google Cloud' },
+    { id: 'google-cloud', label: 'Google Cloud', value: 'gcp' },
     { id: 'azure', label: 'Azure' },
     { id: 'docker', label: 'Docker' }
   ];
@@ -32,6 +33,47 @@ const DeploymentQuestions = ({ onComplete }) => {
     { id: 'ap-southeast', label: 'Asia Pacific Southeast' }
   ];
 
+  const sendCloudProvider = async (provider, userId = '123') => {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/set_cloud_provider', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          cloud_provider: provider === 'google-cloud' ? 'gcp' : provider
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Server response:', data);
+      return data;
+    } catch (error) {
+      console.error('Error sending cloud provider to server:', error);
+      setError('Failed to send cloud provider to server');
+      throw error;
+    }
+  };
+
+  const handleDeploymentSelect = async (platform) => {
+    setAnswers(prev => ({ ...prev, deploymentPlatform: platform }));
+    
+    try {
+      await sendCloudProvider(platform);
+      // Only transition to credentials screen if API call is successful
+      handleTransition('credentials');
+    } catch (error) {
+      // Error is already set by sendCloudProvider
+      // You might want to show an error message to the user here
+      console.error('Failed to set cloud provider:', error);
+    }
+  };
+
   const handleTransition = (nextQuestion) => {
     setIsAnimating(true);
     setTimeout(() => {
@@ -40,27 +82,14 @@ const DeploymentQuestions = ({ onComplete }) => {
     }, 500);
   };
 
-  const handleDeploymentSelect = (platform) => {
-    setAnswers(prev => ({ ...prev, deploymentPlatform: platform }));
-    handleTransition('credentials');
-  };
-
   const handleCredentialsSubmit = (e) => {
     e.preventDefault();
-    
-    // Create final answers object
     const finalAnswers = {
       ...answers,
       timestamp: new Date().toISOString()
     };
-
-    // Console log the final JSON
-    // console.log('Final Deployment Configuration:', JSON.stringify(finalAnswers, null, 2));
-    
-    // Trigger animation before completing
     setIsAnimating(true);
     setTimeout(() => {
-      // Call the onComplete prop with the final answers
       onComplete?.(finalAnswers);
     }, 500);
   };
@@ -81,6 +110,11 @@ const DeploymentQuestions = ({ onComplete }) => {
 
   return (
     <div className="flex flex-col items-center space-y-6 overflow-hidden">
+      {error && (
+        <div className="text-red-500 bg-red-100 p-2 rounded">
+          {error}
+        </div>
+      )}
       <div
         className={`transition-all duration-500 transform ${
           isAnimating ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'
@@ -88,7 +122,7 @@ const DeploymentQuestions = ({ onComplete }) => {
       >
         {currentQuestion === 'deployment' && (
           <div className="text-center">
-            <h1 className="font-pressStart text-white text-2xl mb-4">
+            <h1 className="text-white text-2xl mb-4">
               Where do you want to deploy?
             </h1>
             <div className="flex space-x-4 justify-center items-center">
@@ -97,7 +131,7 @@ const DeploymentQuestions = ({ onComplete }) => {
                   key={option.id}
                   onClick={() => handleDeploymentSelect(option.id)}
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg 
-                           font-pressStart text-sm transition-colors duration-200"
+                           text-sm transition-colors duration-200"
                 >
                   {option.label}
                 </Button>
@@ -108,7 +142,7 @@ const DeploymentQuestions = ({ onComplete }) => {
 
         {currentQuestion === 'credentials' && (
           <div className="text-center w-full max-w-md">
-            <h1 className="font-pressStart text-white text-2xl mb-6">
+            <h1 className="text-white text-2xl mb-6">
               Enter {getPlatformLabel()} Credentials
             </h1>
             <form onSubmit={handleCredentialsSubmit} className="space-y-4">
@@ -119,7 +153,7 @@ const DeploymentQuestions = ({ onComplete }) => {
                   value={answers.credentials.username}
                   onChange={(e) => handleCredentialChange('username', e.target.value)}
                   className="bg-slate-800 text-white border-blue-500 
-                            placeholder:text-gray-400 font-pressStart text-sm"
+                            placeholder:text-gray-400 text-sm"
                 />
                 <Input
                   type="password"
@@ -127,7 +161,7 @@ const DeploymentQuestions = ({ onComplete }) => {
                   value={answers.credentials.password}
                   onChange={(e) => handleCredentialChange('password', e.target.value)}
                   className="bg-slate-800 text-white border-blue-500 
-                            placeholder:text-gray-400 font-pressStart text-sm"
+                            placeholder:text-gray-400 text-sm"
                 />
               </div>
               <Input
@@ -136,7 +170,7 @@ const DeploymentQuestions = ({ onComplete }) => {
                 value={answers.credentials.projectNumber}
                 onChange={(e) => handleCredentialChange('projectNumber', e.target.value)}
                 className="bg-slate-800 text-white border-blue-500 
-                          placeholder:text-gray-400 font-pressStart text-sm"
+                          placeholder:text-gray-400 text-sm"
               />
               <Select 
                 value={answers.credentials.region}
@@ -156,7 +190,7 @@ const DeploymentQuestions = ({ onComplete }) => {
               <Button
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 
-                         rounded-lg font-pressStart text-sm transition-colors duration-200"
+                         rounded-lg text-sm transition-colors duration-200"
               >
                 Continue
               </Button>
