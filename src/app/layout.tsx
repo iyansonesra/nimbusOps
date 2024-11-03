@@ -1,5 +1,19 @@
 import { Metadata } from 'next';
 import * as React from 'react';
+import { Press_Start_2P, Montserrat } from 'next/font/google';
+
+const pressStart2P = Press_Start_2P({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-press-start-2p',
+});
+
+const montserrat = Montserrat({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-montserrat',
+});
+
 
 import '@/styles/globals.css';
 // !STARTERCONF This is for demo purposes, remove @/styles/colors.css import immediately
@@ -55,8 +69,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html>
-      <body>{children}</body>
-    </html>
+    <html lang="en" className={`${pressStart2P.variable} ${montserrat.variable}`}>
+    <body>{children}</body>
+  </html>
   );
 }
