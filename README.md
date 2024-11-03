@@ -8,10 +8,47 @@ As developers, we’ve often encountered the tedious process of setting up cloud
 ## What it does
 NimbusOps automates the process of deploying code to the cloud using Terraform. It allows users to upload any code they want to deploy, select their preferred cloud provider, and configure settings directly in the application. With just a few clicks, NimbusOps handles all aspects of infrastructure provisioning, applying the necessary Terraform scripts and configurations to deploy the code. This tool supports various providers, including AWS, GCP, and Azure, and provides users with a simple, unified interface to manage their cloud deployments effortlessly.
 
-## Use Case: Deploying a Static HTML Page to GCP
+## Use Cases for NimbusOps
+
+### 1. Deploying a Serverless Function to AWS Lambda
 
 **User Input:**  
-"I have a static HTML page that I want to upload to GCP as a cloud bucket."
+"I want to deploy a Node.js function to AWS Lambda that processes user uploads."
+
+### 2. Creating a NoSQL Database with DynamoDB
+
+**User Input:**  
+"I need to set up a DynamoDB table on AWS to store user profiles with attributes like `username`, `email`, and `age`."
+
+### 3. Hosting a Web Application on Azure App Service
+
+**User Input:**  
+"I have a React web application that I want to host on Azure App Service. Please set up the environment for me."
+
+### 4. Deploying a Static Website to AWS S3
+
+**User Input:**  
+"I want to upload my static website to an S3 bucket on AWS. The bucket should be publicly accessible."
+
+### 5. Configuring a Virtual Machine on Azure
+
+**User Input:**  
+"I need to create a virtual machine on Azure running Ubuntu for my development environment."
+
+### 6. Setting Up a PostgreSQL Database on AWS RDS
+
+**User Input:**  
+"I want to deploy a PostgreSQL database on AWS RDS for my application. Please configure it with backup and scaling options."
+
+### 7. Creating a Cloud Function on Google Cloud Platform
+
+**User Input:**  
+"I have a Python script that I want to deploy as a Cloud Function on GCP to automate image processing."
+
+### 8. Deploying a Containerized Application on Azure Kubernetes Service
+
+**User Input:**  
+"I want to deploy my Docker container on Azure Kubernetes Service. Please handle the configuration and scaling for me."
 
 ```mermaid
 graph LR
