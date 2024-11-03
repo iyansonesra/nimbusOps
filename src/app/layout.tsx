@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
+import { Montserrat,Press_Start_2P } from 'next/font/google';
 import * as React from 'react';
-import { Press_Start_2P, Montserrat } from 'next/font/google';
 
 const pressStart2P = Press_Start_2P({
   weight: '400',

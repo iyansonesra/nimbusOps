@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -54,7 +55,7 @@ const DeploymentQuestions = ({ onComplete }) => {
     };
 
     // Console log the final JSON
-    console.log('Final Deployment Configuration:', JSON.stringify(finalAnswers, null, 2));
+    // console.log('Final Deployment Configuration:', JSON.stringify(finalAnswers, null, 2));
     
     // Trigger animation before completing
     setIsAnimating(true);

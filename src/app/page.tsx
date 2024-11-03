@@ -1,15 +1,13 @@
 "use client";
-import React, { useEffect, useState, useRef } from 'react';
-import { ArrowRight } from 'lucide-react';
-import game from './../../public/images/machine.png';
-import arcade from './../../public/images/arcade.png';
+import React, { useEffect, useRef,useState } from 'react';
+
 import RetroButton from '@/app/components/RetroButton';
-import StarryBackground from './components/StarryBackground';
+
+import arcade from './../../public/images/arcade.png';
+import ChatInterface from './components/ChatInterface';
 import DeploymentQuestions from './components/DeploymentQuestions';
 import LoadingProgress from './components/SequentialLoading';
-import ChatInterface from './components/ChatInterface';
-
-import { set } from 'zod';
+import StarryBackground from './components/StarryBackground';
 
 const AnimatedGameScreen = () => {
   const [isAnimating, setIsAnimating] = useState(false);
@@ -67,7 +65,7 @@ const AnimatedGameScreen = () => {
 
   const handleFolderSelect = (event) => {
     const folder = event.target.files;
-    console.log('Selected folder:', folder);
+    // console.log('Selected folder:', folder);
   };
 
   const handleArrowClick = () => {
@@ -78,13 +76,11 @@ const AnimatedGameScreen = () => {
       setTimeout(() => {
         setInitialQuestion(true);
       }, 750);
-      console.log('Text fading');
+      // console.log('Text fading');
     }, 100);
   };
 
-  const handleInputSubmit = () => {
-    console.log('Input submitted:', inputValue);
-  };
+
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
@@ -161,7 +157,7 @@ const AnimatedGameScreen = () => {
           onComplete={(answers) => {
             setDeploymentConfig(answers);
             setShowInput(true);
-            console.log('Deployment configuration received:', answers);
+            // console.log('Deployment configuration received:', answers);
           }}
         />
 

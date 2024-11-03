@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
 import { ArrowRight } from 'lucide-react';
+import React, { useEffect, useRef,useState } from 'react';
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const MOCK_API_RESPONSE = {
