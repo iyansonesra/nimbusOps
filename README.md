@@ -1,6 +1,6 @@
-https://youtu.be/vVp6MqBwgU0
-
 # NimbusOps
+
+Demo video: https://youtu.be/vVp6MqBwgU0
 
 NimbusOps is a cutting-edge DevOps tool that transforms the way developers interact with cloud deployment processes. By harnessing the power of an interactive chatbot, NimbusOps simplifies complex deployment tasks and streamlines workflows, making cloud operations more accessible than ever. With its integration of advanced technologies, including Flask and React, the platform offers a seamless user experience that enhances productivity and collaboration. As you explore NimbusOps, you’ll discover innovative features designed to optimize your cloud deployment journey, ensuring that you can focus on what truly matters—building and scaling your projects with ease.
 
